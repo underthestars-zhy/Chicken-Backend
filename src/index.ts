@@ -123,7 +123,7 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
                     `
             }
         ],
-        model: 'gpt-4o'
+        model: 'gpt-4o-mini'
     })
 
     return chatCompletion.choices[0].message.content ?? ""
