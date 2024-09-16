@@ -21,12 +21,12 @@ const app = new Elysia()
             "api-version": t.String()
         }),
         headers: t.Object({
-            "Ocp-Apim-Subscription-Key": t.String(),
-            "Ocp-Apim-Subscription-Region": t.String()
+            "ocp-apim-subscription-region": t.String(),
+            "ocp-apim-subscription-key": t.String()
         }),
-        body: t.Object({
+        body: t.Array(t.Object({
             text: t.String()
-        })
+        }))
     })
     .listen(3000);
 
