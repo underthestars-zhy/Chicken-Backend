@@ -107,12 +107,6 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
                     
                     --- CONTENT END
                     
-                    --- HSK ${level} EXAMPLE SENTENCE:
-                    
-                    ${text_example[level]}
-                    
-                    --- HSK ${level} EXAMPLE END
-                    
                     Understand the provided content above. Retell them with the same meaning using Chinese Words from the Chinese HSK ${level} vocabulary set provided above, and maintaining the first language words that users would likely not know in their second language based on their fluency level. You can break one sentence into multiple ones composed of Chinese HSK ${level} vocabulary and user's first language words. Your output should be in Chinese words that are in the provided dictionary and other words that remain in English.
                     
                     The attached dictionary is only a guide - you should consider the Fluency Level of the user and be intelligent about not showing them words in their second language that they don't know. Keep the Chinese characters within their HSK level.
