@@ -132,7 +132,20 @@ const app = new Elysia()
             model: 'gpt-4o'
         })
 
-        return chatCompletion.choices[0].message.content
+        return [
+            {
+                detectedLanguage: {
+                    language: query.from,
+                    score: 1
+                },
+                translations: [
+                    {
+                        text: chatCompletion.choices[0].message.content,
+                        to: query.to
+                    }
+                ]
+            },
+        ]
     }, {
         query: t.Object({
             to: t.String(),
