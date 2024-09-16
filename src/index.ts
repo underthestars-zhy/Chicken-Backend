@@ -137,7 +137,7 @@ const app = new Elysia()
     .post('/translate', async ({query, headers, body}) => {
         return await Promise.all(body.map(async req => ({
             detectedLanguage: {
-                language: query.from,
+                language: query.from ?? 'en',
                 score: 1
             },
             translations: [
@@ -150,7 +150,7 @@ const app = new Elysia()
     }, {
         query: t.Object({
             to: t.String(),
-            from: t.String(),
+            from: t.Optional(t.String()),
             "api-version": t.String()
         }),
         headers: t.Object({
