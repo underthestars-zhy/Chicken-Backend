@@ -135,7 +135,7 @@ const app = new Elysia()
     .use(Logestic.preset('common'))
     .get("/", () => ({status: 200}))
     .post('/translate', async ({query, headers, body}) => {
-        return await Promise.any(body.map(async req => ({
+        return await Promise.all(body.map(async req => ({
             detectedLanguage: {
                 language: query.from,
                 score: 1
