@@ -65,19 +65,15 @@ const text_example = {
     `
 }
 
-const app = new Elysia()
-    .use(Logestic.preset('common'))
-    .get("/", () => ({status: 200}))
-    .post('/translate', async ({query, headers, body}) => {
-        const level = headers['ocp-apim-subscription-region'] as unknown as 1 | 2 | 3 | 4 | 5 | 6
-        const hsk_vocabulary = await getHskVocabulary(level)
-        const hsk_vocab_str = hsk_vocabulary.join(', ')
+async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<string> {
+    const hsk_vocabulary = await getHskVocabulary(level)
+    const hsk_vocab_str = hsk_vocabulary.join(', ')
 
-        let chatCompletion = await client.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: `You are a professional Chinese translator. Your task is to simplify Chinese sentences or translate and simplify English sentences into Chinese. You will be given the learner's fluency level in their second language, when you translate the content, keep first language words that user likely would not know in their second language, given their fluency level.
+    let chatCompletion = await client.chat.completions.create({
+        messages: [
+            {
+                role: "system",
+                content: `You are a professional Chinese translator. Your task is to simplify Chinese sentences or translate and simplify English sentences into Chinese. You will be given the learner's fluency level in their second language, when you translate the content, keep first language words that user likely would not know in their second language, given their fluency level.
                     
                     Here is an example of an English Sentence in different language fluency levels. 
                     Original English text: The study of abiogenesis aims to determine how pre-life chemical reactions gave rise to life under conditions strikingly different from those on Earth today. 
@@ -97,17 +93,17 @@ const app = new Elysia()
 
                     HSK1: 人想知道life是怎么来的。
                     `
-                },
-                {
-                    role: 'user',
-                    content: `
+            },
+            {
+                role: 'user',
+                content: `
                     fluency level: ${level}
                     Here are the HSK vocabulary list for the fluency level:
                     ${hsk_vocab_str}
                     
                     --- CONTENT START
                     
-                    ${body[0].text}
+                    ${text}
                     
                     --- CONTENT END
                     
@@ -127,25 +123,30 @@ const app = new Elysia()
                     
                     DON'T PUT SUPER COMPLICATED WORDS. IF SOMEONE IS HSK3, DON'T SHOW HSK7 WORDS. ALSO KEEP THE GRAMMAR SIMPLE! DO NOT ADD UNNECESSARY COMPLICATED GRAMMARS IN CHINESE.
                     `
-                }
-            ],
-            model: 'gpt-4o'
-        })
+            }
+        ],
+        model: 'gpt-4o'
+    })
 
-        return [
-            {
-                detectedLanguage: {
-                    language: query.from,
-                    score: 1
-                },
-                translations: [
-                    {
-                        text: chatCompletion.choices[0].message.content,
-                        to: query.to
-                    }
-                ]
+    return chatCompletion.choices[0].message.content ?? ""
+}
+
+const app = new Elysia()
+    .use(Logestic.preset('common'))
+    .get("/", () => ({status: 200}))
+    .post('/translate', async ({query, headers, body}) => {
+        return await Promise.any(body.map(async req => ({
+            detectedLanguage: {
+                language: query.from,
+                score: 1
             },
-        ]
+            translations: [
+                {
+                    text: await translate(req.text, headers["ocp-apim-subscription-region"] as unknown as 1 | 2 | 3 | 4 | 5 | 6),
+                    to: query.to
+                }
+            ]
+        })))
     }, {
         query: t.Object({
             to: t.String(),
