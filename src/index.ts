@@ -69,11 +69,8 @@ const app = new Elysia()
     .use(Logestic.preset('common'))
     .get("/", () => ({status: 200}))
     .post('/translate', async ({query, headers, body}) => {
-        return {status: 200}
-
-        console.log('do')
         const level = headers['ocp-apim-subscription-region'] as unknown as 1 | 2 | 3 | 4 | 5 | 6
-        const hsk_vocabulary: string[] = []
+        const hsk_vocabulary = await getHskVocabulary(level)
         const hsk_vocab_str = hsk_vocabulary.join(', ')
 
         let chatCompletion = await client.chat.completions.create({
@@ -150,7 +147,7 @@ const app = new Elysia()
             text: t.String()
         }))
     })
-    .listen(3000);
+    .listen(process.env.PORT || 5432);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
