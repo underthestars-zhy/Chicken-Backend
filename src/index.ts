@@ -9,21 +9,23 @@ const client = new OpenAI({
 const app = new Elysia()
     .use(Logestic.preset('common'))
     .get("/", () => ({status: 200}))
-    .post('/translator/text/v3.0/translate', async ({query, headers, body}) => {
+    .post('/translate', async ({query, headers, body}) => {
         console.log(query)
         console.log(headers)
         console.log(body)
         return 'a'
     }, {
         query: t.Object({
-            to: t.String()
+            to: t.String(),
+            from: t.String(),
+            "api-version": t.String()
         }),
         headers: t.Object({
             "Ocp-Apim-Subscription-Key": t.String(),
             "Ocp-Apim-Subscription-Region": t.String()
         }),
         body: t.Object({
-            Text: t.String()
+            text: t.String()
         })
     })
     .listen(3000);
