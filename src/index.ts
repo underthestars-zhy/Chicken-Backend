@@ -70,7 +70,7 @@ const app = new Elysia()
     .get("/", () => ({status: 200}))
     .post('/translate', async ({query, headers, body}) => {
         const level = headers['ocp-apim-subscription-region'] as unknown as 1 | 2 | 3 | 4 | 5 | 6
-        const hsk_vocabulary = await getHskVocabulary(level)
+        const hsk_vocabulary: string[] = []
         const hsk_vocab_str = hsk_vocabulary.join(', ')
 
         let chatCompletion = await client.chat.completions.create({
