@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "elysia": "latest",
+    "logestic": "^1.2.3",
     "openai": "^4.61.1"
   },
   "devDependencies": {
