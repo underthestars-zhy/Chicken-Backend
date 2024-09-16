@@ -98,6 +98,8 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
                 role: 'user',
                 content: `
                     fluency level: ${level}
+                    Here are the HSK vocabulary list for the fluency level:
+                    ${hsk_vocab_str}
                     
                     --- CONTENT START
                     
