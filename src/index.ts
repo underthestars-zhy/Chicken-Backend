@@ -26,6 +26,12 @@ async function getHskVocabulary(level: number): Promise<string[]> {
     return vocabulary;
 }
 
+
+let userCustomDict = new Set();
+
+
+
+
 const text_example = {
     [1]: `
     - 她很高兴。
@@ -68,6 +74,9 @@ const text_example = {
 async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<string> {
     const hsk_vocabulary = await getHskVocabulary(level)
     const hsk_vocab_str = hsk_vocabulary.join(', ')
+    
+    // Add the user's custom dictionary to the prompt
+    const customDictStr = Array.from(userCustomDict).join(', ');
 
     let chatCompletion = await client.chat.completions.create({
         messages: [
@@ -101,15 +110,18 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
                     Here are the HSK vocabulary list for the fluency level:
                     ${hsk_vocab_str}
                     
+                    Here is the user's custom vocabulary:
+                    ${customDictStr}
+                    
                     --- CONTENT START
                     
                     ${text}
                     
                     --- CONTENT END
                     
-                    Understand the provided content above. Retell them with the same meaning using Chinese Words from the Chinese HSK ${level} vocabulary set provided above, and maintaining the first language words that users would likely not know in their second language based on their fluency level. You can break one sentence into multiple ones composed of Chinese HSK ${level} vocabulary and user's first language words. Your output should be in Chinese words that are in the provided dictionary and other words that remain in English.
+                    Understand the provided content above. Retell them with the same meaning using Chinese Words from the Chinese HSK ${level} vocabulary set provided above, the user's custom vocabulary, and maintaining the first language words that users would likely not know in their second language based on their fluency level. You can break one sentence into multiple ones composed of Chinese HSK ${level} vocabulary, user's custom vocabulary, and user's first language words. Your output should be in Chinese words that are in the provided dictionaries and other words that remain in English.
                     
-                    The attached dictionary is only a guide - you should consider the Fluency Level of the user and be intelligent about not showing them words in their second language that they don't know. Keep the Chinese characters within their HSK level.
+                    The attached dictionaries are only a guide - you should consider the Fluency Level of the user and be intelligent about not showing them words in their second language that they don't know. Keep the Chinese characters within their HSK level and custom vocabulary.
                     
                     **The response should only contains the paraphrased text.**
                     **If the provided content is empty or represent nothing, just response with nothing.**
@@ -154,6 +166,15 @@ const app = new Elysia()
         body: t.Array(t.Object({
             text: t.String()
         }))
+    })
+    // Add the new endpoint for processing the custom dictionary
+    .post('/process_file', ({body}) => {
+        userCustomDict = new Set(body.content.split('\n').map(word => word.trim().toLowerCase()).filter(Boolean));
+        return {message: "File content received and stored in user_custom_dict"};
+    }, {
+        body: t.Object({
+            content: t.String()
+        })
     })
     .listen(process.env.PORT || 5432);
 
