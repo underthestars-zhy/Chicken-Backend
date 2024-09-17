@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import {Logestic} from "logestic";
 
 const client = new OpenAI({
-    apiKey: "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", // This is the default and can be omitted
+    apiKey: Bun.env.OPENAI_KEY, // This is the default and can be omitted
 });
 
 async function getHskVocabulary(level: number): Promise<string[]> {
