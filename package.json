@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.0.0-alpha.20",
+    "@tensorflow/tfjs": "^4.21.0",
     "@types/natural": "^5.1.5",
     "elysia": "latest",
     "logestic": "^1.2.3",

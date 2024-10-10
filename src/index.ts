@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import {Logestic} from "logestic";
 import natural from 'natural';
 import {AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer} from '@huggingface/transformers';
+import * as tf from '@tensorflow/tfjs';
 
 const client = new OpenAI({
     apiKey: process.env.OPENAI_KEY, // This is the default and can be omitted
@@ -91,21 +92,13 @@ async function getEmbedding(word: string) {
     return embeddingArray;
 }
 
-function dotProduct(vec1: number[], vec2: number[]): number {
-    return vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
-}
-
-// Function to calculate the magnitude (norm) of a vector
-function magnitude(vec: number[]): number {
-    return Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0));
-}
-
-function cosineSimilarity(vec1: number[], vec2: number[]): number {
-    const dotProd = dotProduct(vec1, vec2);
-    const magnitude1 = magnitude(vec1);
-    const magnitude2 = magnitude(vec2);
-
-    return dotProd / (magnitude1 * magnitude2);
+async function cosineSimilarity(embedding1: any, embedding2: any): Promise<number> {
+    // Ensure the embeddings are in the correct tensor format
+    let dotProduct = tf.dot(embedding1, embedding2);
+    let norm1 = tf.norm(embedding1);
+    let norm2 = tf.norm(embedding2);
+    let similarity = dotProduct.div(norm1.mul(norm2));
+    return similarity.dataSync()[0];  // Get the similarity score
 }
 
 async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<string> {
@@ -114,14 +107,14 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
     let embeddings: [string, any][] = await getHskVocabulary(level)
 
     let allowedVocabulary = new Set<string>();
-    let tokenEmbeddings = await Promise.all(tokens.map(token => getEmbedding(token)));
+    let tokenEmbeddings = await Promise.all(tokens.map(async token => {return await getEmbedding(token)}));
 
     await Promise.all(tokenEmbeddings.map(async (embedding, index) => {
-        embeddings.forEach(value => {
-            if (cosineSimilarity(value[1], embedding) > 0.7) {
+        await Promise.all(embeddings.map(async value => {
+            if (await cosineSimilarity(value[1], embedding) > 0.7) {
                 allowedVocabulary.add(value[0]);
             }
-        });
+        }))
     }));
 
     const hsk_vocab_str = [...allowedVocabulary].join(', ')
