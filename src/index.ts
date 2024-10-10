@@ -111,8 +111,7 @@ function cosineSimilarity(vec1: number[], vec2: number[]): number {
 async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<string> {
     const tokens =  tokenize(text)
 
-    let embeddings: [string, any][] = (await getHskVocabulary(level)).forEach(value => embeddings.push(value))
-
+    let embeddings: [string, any][] = await getHskVocabulary(level)
 
     let allowedVocabulary = new Set<string>()
 
