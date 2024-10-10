@@ -113,13 +113,16 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
 
     let embeddings: [string, any][] = await getHskVocabulary(level)
 
-    let allowedVocabulary = new Set<string>()
+    let allowedVocabulary = new Set<string>();
+    let tokenEmbeddings = await Promise.all(tokens.map(token => getEmbedding(token)));
 
-    for (const token of tokens) {
-        const embedding = await getEmbedding(token)
-
-        embeddings.filter(value => cosineSimilarity(value[1], embedding) > 0.7).forEach(value => allowedVocabulary.add(value[0]))
-    }
+    await Promise.all(tokenEmbeddings.map(async (embedding, index) => {
+        embeddings.forEach(value => {
+            if (cosineSimilarity(value[1], embedding) > 0.7) {
+                allowedVocabulary.add(value[0]);
+            }
+        });
+    }));
 
     const hsk_vocab_str = [...allowedVocabulary].join(', ')
 
@@ -209,6 +212,10 @@ const app = new Elysia()
             text: t.String()
         }))
     })
+    // .listen({
+    //     hostname: '192.168.31.199',
+    //     port: 5432,
+    // })
     .listen(process.env.PORT || 5432);
 
 console.log(
