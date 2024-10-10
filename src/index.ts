@@ -9,10 +9,10 @@ const client = new OpenAI({
     apiKey: process.env.OPENAI_KEY, // This is the default and can be omitted
 });
 
-const hsk_embedding: {[key: number]: [string, number[]][]} = {}
+const hsk_embedding: {[key: number]: [string, Float64Array[]][]} = {}
 
 
-async function getHskVocabulary(level: number): Promise<[string, number[]][]> {
+async function getHskVocabulary(level: number): Promise<[string, Float64Array[]][]> {
     const saved = hsk_embedding[level]
     if (saved) { return saved }
 
@@ -92,31 +92,25 @@ async function getEmbedding(word: string) {
     return embeddingArray;
 }
 
-function dotProduct(vec1: number[], vec2: number[]): number {
-    return vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
-}
-
-// Function to calculate the magnitude (norm) of a vector
-function magnitude(vec: number[]): number {
-    return Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0));
-}
-
 // Function to calculate cosine similarity between two vectors
-function cosineSimilarity(vec1: number[], vec2: number[]): number {
+function cosineSimilarity(vec1: Float64Array, vec2: Float64Array): number {
     let dotProd = 0;
     let magnitude1 = 0;
     let magnitude2 = 0;
+    const length = vec1.length; // Store length locally
 
-    for (let i = 0; i < vec1.length; i++) {
-        dotProd += vec1[i] * vec2[i];
-        magnitude1 += vec1[i] * vec1[i];
-        magnitude2 += vec2[i] * vec2[i];
+    for (let i = 0; i < length; i++) {
+        const val1 = vec1[i];
+        const val2 = vec2[i];
+        dotProd += val1 * val2;
+        magnitude1 += val1 * val1;
+        magnitude2 += val2 * val2;
     }
 
-    const magnitudeProduct = Math.sqrt(magnitude1) * Math.sqrt(magnitude2);
+    const magnitudeProduct = Math.sqrt(magnitude1 * magnitude2);
 
     if (magnitudeProduct === 0) {
-        return 0; // Return 0 if either vector is zero, meaning no similarity.
+        return 0; // Return 0 if either vector is zero
     }
 
     return dotProd / magnitudeProduct;
