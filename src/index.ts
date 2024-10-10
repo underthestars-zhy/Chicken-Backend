@@ -1,29 +1,26 @@
 import { Elysia, t } from "elysia";
 import OpenAI from "openai";
 import {Logestic} from "logestic";
+import natural from 'natural';
+import {AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer} from '@huggingface/transformers';
 
 const client = new OpenAI({
     apiKey: process.env.OPENAI_KEY, // This is the default and can be omitted
 });
 
-async function getHskVocabulary(level: number): Promise<string[]> {
-    const vocabulary: string[] = [];
+const hsk_embedding: {[key: number]: [string, number[]][]} = {}
 
-    for (let i = 1; i <= level; i++) {
-        try {
-            const filePath = `public/HSK ${level}.txt`
-            const fileContent = await Bun.file(filePath).text()
-            vocabulary.push(...fileContent.split('\n').map(line => line.trim()));
-        } catch (error) {
-            if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-                console.warn(`Warning: HSK ${i}.txt not found`);
-            } else {
-                throw error;
-            }
-        }
-    }
 
-    return vocabulary;
+async function getHskVocabulary(level: number): Promise<[string, number[]][]> {
+    const saved = hsk_embedding[level]
+    if (saved) { return saved }
+
+    const filePath = `public/HSK ${level}.json`
+    const fileContent = await Bun.file(filePath).text()
+
+    hsk_embedding[level] = JSON.parse(fileContent);
+
+    return hsk_embedding[level]
 }
 
 const text_example = {
@@ -65,9 +62,71 @@ const text_example = {
     `
 }
 
+const naturalTokenizer = new natural.WordTokenizer();
+
+function tokenize(text: string): string[] {
+    const tokens = naturalTokenizer.tokenize(text.toLowerCase());
+    // Optional: Filter out stop words
+    const stopWords = new Set(natural.stopwords);
+    return tokens.filter(token => !stopWords.has(token));
+}
+
+let tokenizer: PreTrainedTokenizer
+AutoTokenizer.from_pretrained('jinaai/jina-embeddings-v2-base-zh').then(res => {
+    console.log('Tokenizer Init')
+    tokenizer = res
+})
+let model: PreTrainedModel
+AutoModel.from_pretrained('jinaai/jina-embeddings-v2-base-zh').then(res => {
+    console.log('Model Init')
+    model = res
+})
+
+async function getEmbedding(word: string) {
+    let inputs = await tokenizer(word, { return_tensors: "pt" });
+    let output = await model(inputs);
+    let embedding = output.last_hidden_state.mean(1).squeeze()
+    let embeddingArray = embedding.dataSync ? Array.from(embedding.dataSync()) : embedding.tolist();
+
+    return embeddingArray;
+}
+
+function dotProduct(vec1: number[], vec2: number[]): number {
+    return vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
+}
+
+// Function to calculate the magnitude (norm) of a vector
+function magnitude(vec: number[]): number {
+    return Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0));
+}
+
+function cosineSimilarity(vec1: number[], vec2: number[]): number {
+    const dotProd = dotProduct(vec1, vec2);
+    const magnitude1 = magnitude(vec1);
+    const magnitude2 = magnitude(vec2);
+
+    return dotProd / (magnitude1 * magnitude2);
+}
+
 async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<string> {
-    const hsk_vocabulary = await getHskVocabulary(level)
-    const hsk_vocab_str = hsk_vocabulary.join(', ')
+    const tokens =  tokenize(text)
+
+    let embeddings: [string, any][] = []
+
+    for (let i = 1; i <= level; i++) {
+        (await getHskVocabulary(i)).forEach(value => embeddings.push(value))
+    }
+
+
+    let allowedVocabulary: string[] = []
+
+    for (const token of tokens) {
+        const embedding = await getEmbedding(token)
+
+        embeddings.filter(value => cosineSimilarity(value[1], embedding) > 0.5).forEach(value => allowedVocabulary.push(value[0]))
+    }
+
+    const hsk_vocab_str = allowedVocabulary.join(', ')
 
     let chatCompletion = await client.chat.completions.create({
         messages: [
@@ -98,7 +157,7 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
                 role: 'user',
                 content: `
                     fluency level: ${level}
-                    Here are the HSK vocabulary list for the fluency level:
+                    Here are the HSK vocabulary list might be used for the fluency level:
                     ${hsk_vocab_str}
                     
                     --- CONTENT START
@@ -155,7 +214,11 @@ const app = new Elysia()
             text: t.String()
         }))
     })
-    .listen(process.env.PORT || 5432);
+    .listen({
+        port: 5432,
+        hostname: '192.168.31.199',
+    })
+    // .listen(process.env.PORT || 5432);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`

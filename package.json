@@ -6,12 +6,19 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.0.0-alpha.20",
+    "@types/natural": "^5.1.5",
     "elysia": "latest",
     "logestic": "^1.2.3",
+    "natural": "^8.0.1",
     "openai": "^4.61.1"
   },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "@types/bun": "latest"
   },
   "module": "src/index.js"
 }
