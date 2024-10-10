@@ -118,15 +118,15 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
     }
 
 
-    let allowedVocabulary: string[] = []
+    let allowedVocabulary = new Set<string>()
 
     for (const token of tokens) {
         const embedding = await getEmbedding(token)
 
-        embeddings.filter(value => cosineSimilarity(value[1], embedding) > 0.7).forEach(value => allowedVocabulary.push(value[0]))
+        embeddings.filter(value => cosineSimilarity(value[1], embedding) > 0.7).forEach(value => allowedVocabulary.add(value[0]))
     }
 
-    const hsk_vocab_str = allowedVocabulary.join(', ')
+    const hsk_vocab_str = [...allowedVocabulary].join(', ')
 
     let chatCompletion = await client.chat.completions.create({
         messages: [
