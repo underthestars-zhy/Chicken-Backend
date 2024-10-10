@@ -123,7 +123,7 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
     for (const token of tokens) {
         const embedding = await getEmbedding(token)
 
-        embeddings.filter(value => cosineSimilarity(value[1], embedding) > 0.5).forEach(value => allowedVocabulary.push(value[0]))
+        embeddings.filter(value => cosineSimilarity(value[1], embedding) > 0.7).forEach(value => allowedVocabulary.push(value[0]))
     }
 
     const hsk_vocab_str = allowedVocabulary.join(', ')
@@ -214,11 +214,7 @@ const app = new Elysia()
             text: t.String()
         }))
     })
-    .listen({
-        port: 5432,
-        hostname: '192.168.31.199',
-    })
-    // .listen(process.env.PORT || 5432);
+    .listen(process.env.PORT || 5432);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
