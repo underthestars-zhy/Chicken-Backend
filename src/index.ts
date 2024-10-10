@@ -103,11 +103,23 @@ function magnitude(vec: number[]): number {
 
 // Function to calculate cosine similarity between two vectors
 function cosineSimilarity(vec1: number[], vec2: number[]): number {
-    const dotProd = dotProduct(vec1, vec2);
-    const magnitude1 = magnitude(vec1);
-    const magnitude2 = magnitude(vec2);
+    let dotProd = 0;
+    let magnitude1 = 0;
+    let magnitude2 = 0;
 
-    return dotProd / (magnitude1 * magnitude2);
+    for (let i = 0; i < vec1.length; i++) {
+        dotProd += vec1[i] * vec2[i];
+        magnitude1 += vec1[i] * vec1[i];
+        magnitude2 += vec2[i] * vec2[i];
+    }
+
+    const magnitudeProduct = Math.sqrt(magnitude1) * Math.sqrt(magnitude2);
+
+    if (magnitudeProduct === 0) {
+        return 0; // Return 0 if either vector is zero, meaning no similarity.
+    }
+
+    return dotProd / magnitudeProduct;
 }
 
 async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<string> {
