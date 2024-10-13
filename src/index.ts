@@ -163,7 +163,7 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
                 role: 'user',
                 content: `
                     fluency level: ${level}
-                    Here are the HSK vocabulary list for the fluency level (Your are only allowed to use following words or even simpler words):
+                    Here are the HSK vocabulary list for the fluency level (Your are **only allowed to use following words or even simpler words):
                     ${hsk_vocab_str}
                     
                     --- CONTENT START
@@ -180,7 +180,7 @@ async function translate(text: string, level: 1 | 2 | 3 | 4 | 5 | 6): Promise<st
                     **If the provided content is empty or represent nothing, just response with nothing.**
                     **The response should not contains the indicator like "--- CONTENT START".**
                     
-                    DON'T PUT SUPER COMPLICATED WORDS. IF SOMEONE IS HSK3, DON'T SHOW HSK7 WORDS. ALSO KEEP THE GRAMMAR SIMPLE! DO NOT ADD UNNECESSARY COMPLICATED GRAMMARS IN CHINESE.
+                    DON'T PUT SUPER COMPLICATED WORDS. YOU ARE ONLY ALLOWED TO SHOW THE WORD ATTACHED ABOVE. IF YOU CANNOT FIND SIMPLER WORD, STAY THEM IN ENGLISH. ALSO KEEP THE GRAMMAR SIMPLE! DO NOT ADD UNNECESSARY COMPLICATED GRAMMARS IN CHINESE.
                     `
             }
         ],
